@@ -29,7 +29,7 @@ public class FetchResponse {
 }
 
 
-public class FetchError {
+public class FetchError: Error {
     let errorDescription: String
     
     init(description: String) {

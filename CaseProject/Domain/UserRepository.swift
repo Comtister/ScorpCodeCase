@@ -6,3 +6,9 @@
 //
 
 import Foundation
+
+protocol UserRepository {
+    
+    func fetchUsers(next: String?) async -> Result<FetchResponse,FetchError>
+    
+}

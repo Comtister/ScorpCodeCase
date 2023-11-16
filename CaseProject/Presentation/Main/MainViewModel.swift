@@ -12,7 +12,7 @@ protocol MainViewModelDelegate {
     
     func updateUserData()
     func userDataUpdateFailed(errorDescription: String)
-    func indicatorUpdate(active: Bool)
+    func indicatorUpdate(isActive: Bool)
     
 }
 
@@ -29,7 +29,7 @@ class MainViewModel {
     private var nextUsersString: String? = nil
     
     func fetchNames() {
-        
+        delegate?.indicatorUpdate(isActive: true)
         guard fetchTask == nil else { return }
         
         fetchTask = Task {
@@ -43,6 +43,8 @@ class MainViewModel {
                     userDatas.append(contentsOf: response.people)
                     userDatas = filterUsersForIds()
                     delegate?.updateUserData()
+                    delegate?.indicatorUpdate(isActive: false)
+                    //delegate?.userDataUpdateFailed(errorDescription: "Test")
                 case .failure(let error):
                     delegate?.userDataUpdateFailed(errorDescription: error.errorDescription)
                 }
@@ -55,7 +57,8 @@ class MainViewModel {
     func refreshData() {
         userDatas = []
         nextUsersString = nil
-        initialFetch()
+        delegate?.updateUserData()
+        fetchNames()
     }
     
     func filterUsersForIds() -> [Person] {

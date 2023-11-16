@@ -13,6 +13,8 @@ class MainViewController: UIViewController {
     
     //MARK: - Views
     private var tableView: UITableView!
+    private var indicatorView: UIActivityIndicatorView!
+    private var fetchErrorSheet = UIAlertController(title: "Hata", message: "Veriler yüklenirken hata meydana geldi.", preferredStyle: .actionSheet)
     
     init() {
         self.viewModel = MainViewModel()
@@ -41,6 +43,7 @@ extension MainViewController {
         
         self.view.backgroundColor = .systemBackground
         setupTableView()
+        setupIndicatorView()
     }
     
     private func setupTableView() {
@@ -63,6 +66,22 @@ extension MainViewController {
         
     }
     
+    private func setupIndicatorView() {
+        
+        indicatorView = UIActivityIndicatorView()
+        indicatorView.style = .large
+        indicatorView.isHidden = true
+        indicatorView.translatesAutoresizingMaskIntoConstraints = false
+        
+        self.view.addSubview(indicatorView)
+        
+        NSLayoutConstraint.activate([
+            indicatorView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            indicatorView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
+        ])
+        
+    }
+    
 }
 
 // MARK: - ViewModel Delegates
@@ -76,10 +95,13 @@ extension MainViewController: MainViewModelDelegate {
     func userDataUpdateFailed(errorDescription: String) {
         print("show error")
         //Show error and refresh fetch or cancel
+        
+        
     }
     
-    func indicatorUpdate(active: Bool) {
-        
+    func indicatorUpdate(isActive: Bool) {
+        indicatorView.isHidden = !isActive
+        isActive ? indicatorView.startAnimating() : indicatorView.stopAnimating()
     }
     
 }
@@ -111,7 +133,7 @@ extension MainViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     @objc func handleRefresh() {
-        //viewModel.refreshData()
+        viewModel.refreshData()
         self.tableView.refreshControl?.endRefreshing()
     }
     

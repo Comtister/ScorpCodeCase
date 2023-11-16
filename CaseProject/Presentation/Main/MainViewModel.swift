@@ -12,6 +12,7 @@ protocol MainViewModelDelegate {
     
     func updateUserData()
     func userDataUpdateFailed(errorDescription: String)
+    func indicatorUpdate(active: Bool)
     
 }
 
@@ -26,29 +27,6 @@ class MainViewModel {
     var userDatas: [Person] = []
     
     private var nextUsersString: String? = nil
-    /*
-    init(delegate: MainViewModelDelegate) {
-        self.delegate = delegate
-    }*/
-    
-    func initialFetch() {
-        
-        fetchTask = Task {
-            let result = await userRepository.fetchUsers(next: nil)
-            
-            await MainActor.run {
-                switch result {
-                case .success(let response):
-                    nextUsersString = response.next
-                    delegate?.updateUserData()
-                case .failure(let error):
-                    delegate?.userDataUpdateFailed(errorDescription: error.errorDescription)
-                }
-            }
-             fetchTask = nil
-        }
-       
-    }
     
     func fetchNames() {
         
@@ -62,6 +40,8 @@ class MainViewModel {
                 switch result {
                 case .success(let response):
                     nextUsersString = response.next
+                    userDatas.append(contentsOf: response.people)
+                    userDatas = filterUsersForIds()
                     delegate?.updateUserData()
                 case .failure(let error):
                     delegate?.userDataUpdateFailed(errorDescription: error.errorDescription)
@@ -70,6 +50,36 @@ class MainViewModel {
             fetchTask = nil
         }
         
+    }
+    
+    func refreshData() {
+        userDatas = []
+        nextUsersString = nil
+        initialFetch()
+    }
+    
+    func filterUsersForIds() -> [Person] {
+        
+        let personIds = userDatas.map { $0.id }
+        let uniqueIds = Set(personIds)
+        
+        var personDict: [Int: Person] = [:]
+        
+        userDatas.forEach { person in
+            if let _ = personDict[person.id] {
+                return
+            } else {
+                personDict[person.id] = person
+            }
+        }
+        
+        var filteredPersons: [Person] = []
+        
+        uniqueIds.forEach { id in
+            guard let person = personDict[id] else { return }
+            filteredPersons.append(person)
+        }
+        return filteredPersons
     }
     
 }

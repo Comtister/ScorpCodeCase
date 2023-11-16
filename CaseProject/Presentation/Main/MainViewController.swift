@@ -24,13 +24,11 @@ class MainViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
-        //viewModel.initialFetch()
+        viewModel.fetchNames()
     }
     
 
@@ -67,28 +65,37 @@ extension MainViewController {
     
 }
 
+// MARK: - ViewModel Delegates
 extension MainViewController: MainViewModelDelegate {
     
     func updateUserData() {
+        tableView.reloadData()
         print("update data")
     }
     
     func userDataUpdateFailed(errorDescription: String) {
         print("show error")
+        //Show error and refresh fetch or cancel
+    }
+    
+    func indicatorUpdate(active: Bool) {
+        
     }
     
 }
 
-// MARK: - TableView Extensions
+// MARK: - TableView Delegates
 extension MainViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 5
+        return viewModel.userDatas.count
+        //return 5
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
-        cell.textLabel?.text = "Test \(indexPath.row)"
+        cell.textLabel?.text = viewModel.userDatas[indexPath.row].fullName
+        //cell.textLabel?.text = "Test \(indexPath.row)"
         return cell
     }
     
@@ -97,14 +104,14 @@ extension MainViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        //guard viewModel.userDatas.count != 0 else { return }
+        guard viewModel.userDatas.count != 0 else { return }
         if indexPath.row == viewModel.userDatas.count - 1 {
-           //Fetch Api Call
-            print("fetch")
+            viewModel.fetchNames()
         }
     }
     
     @objc func handleRefresh() {
+        //viewModel.refreshData()
         self.tableView.refreshControl?.endRefreshing()
     }
     

@@ -14,7 +14,8 @@ class MainViewController: UIViewController {
     //MARK: - Views
     private var tableView: UITableView!
     private var indicatorView: UIActivityIndicatorView!
-    private var fetchErrorSheet = UIAlertController(title: "Hata", message: "Veriler yüklenirken hata meydana geldi.", preferredStyle: .actionSheet)
+    private var fetchErrorSheet: UIAlertController!
+    private var zeroFetchErrorSheet: UIAlertController!
     
     init() {
         self.viewModel = MainViewModel()
@@ -40,14 +41,13 @@ class MainViewController: UIViewController {
 extension MainViewController {
     
     private func setupUI() {
-        
         self.view.backgroundColor = .systemBackground
         setupTableView()
         setupIndicatorView()
+        setupAlertViews()
     }
     
     private func setupTableView() {
-        
         tableView = UITableView()
         tableView.delegate = self
         tableView.dataSource = self
@@ -63,11 +63,9 @@ extension MainViewController {
             tableView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
         ])
-        
     }
     
     private func setupIndicatorView() {
-        
         indicatorView = UIActivityIndicatorView()
         indicatorView.style = .large
         indicatorView.isHidden = true
@@ -79,7 +77,15 @@ extension MainViewController {
             indicatorView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
             indicatorView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor)
         ])
+    }
+    
+    private func setupAlertViews() {
+        fetchErrorSheet = UIAlertController(title: "Hata", message: "Veriler yüklenirken hata meydana geldi tekrar deneniyor...", preferredStyle: .actionSheet)
         
+        zeroFetchErrorSheet = UIAlertController(title: "Hata", message: "Kayıt bulunamadı.", preferredStyle: .alert)
+        zeroFetchErrorSheet.addAction(UIAlertAction(title: "Tekrar Dene", style: .default, handler: { [weak self] _ in
+            self?.handleRefresh()
+        }))
     }
     
 }
@@ -88,15 +94,18 @@ extension MainViewController {
 extension MainViewController: MainViewModelDelegate {
     
     func updateUserData() {
+        fetchErrorSheet.dismiss(animated: true)
         tableView.reloadData()
-        print("update data")
     }
     
-    func userDataUpdateFailed(errorDescription: String) {
-        print("show error")
-        //Show error and refresh fetch or cancel
-        
-        
+    func userDataUpdateFailed(errorDescription: MainViewFetchErrorTypes) {
+        switch errorDescription {
+        case .ZeroFound:
+            self.present(zeroFetchErrorSheet, animated: true)
+        case .GeneralError(_):
+            self.present(fetchErrorSheet, animated: true)
+            viewModel.fetchNames()
+        }
     }
     
     func indicatorUpdate(isActive: Bool) {
@@ -111,13 +120,11 @@ extension MainViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return viewModel.userDatas.count
-        //return 5
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
         cell.textLabel?.text = viewModel.userDatas[indexPath.row].fullName
-        //cell.textLabel?.text = "Test \(indexPath.row)"
         return cell
     }
     
